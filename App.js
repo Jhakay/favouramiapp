@@ -8,6 +8,7 @@ import LoginScreen from './app/screens/LoginScreen.js';
 import Dashboard from './app/screens/DashboardScreen.js';
 import CreateEventScreen from './app/screens/CreateEventScreen.js';
 import EventScreen from './app/screens/EventScreen.js';
+import AddGuestScreen from './app/screens/AddGuestScreen.js';
 
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
@@ -24,6 +25,7 @@ export default function App() {
         <Stack.Screen name="Dashboard" component={Dashboard} />
         <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
         <Stack.Screen name="Event" component={EventScreen} />
+        <Stack.Screen name="AddGuest" component={AddGuestScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

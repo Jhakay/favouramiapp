@@ -110,9 +110,9 @@ const Dashboard = () => {
                 onPress={() => navigation.navigate('Event', {
                     eventName: item.event,
                     eventDate: item.dateTime,
-                    eventID: item.id
+                    eventID: item.id,
                     //Other event details you want to pass
-                })}
+                })} 
             >    
                 <View style={styles.eventItem}>
                     <Text style={styles.eventName}>{item.event}</Text>
