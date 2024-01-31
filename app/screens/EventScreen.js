@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Button, StyleSheet } from 'react-native';
 import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 const EventScreen = ({ route, navigation }) => {
   const { eventID } = route.params; // this should be just the ID, not the full path
@@ -9,6 +10,25 @@ const EventScreen = ({ route, navigation }) => {
   const [guests, setGuests] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let isActive = true;
+
+      const fetchData = async () => {
+        if (isActive) {
+          await fetchEventDetails();
+          await fetchGuestDetails();
+        }
+      };
+
+      fetchData();
+
+      return () => {
+        isActive = false;
+      };
+    }, [eventID])
+  );
 
   // Fetch the details of the event
   const fetchEventDetails = async () => {
@@ -56,17 +76,6 @@ const EventScreen = ({ route, navigation }) => {
       }
     }
   };
-
-  // Effect to fetch event and guest details
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchEventDetails();
-      await fetchGuestDetails();
-    };
-
-    setLoading(true);
-    fetchData().finally(() => setLoading(false));
-  }, [eventID]);
 
    // Function placeholders for button actions
    const handleAddGuests = () => {
