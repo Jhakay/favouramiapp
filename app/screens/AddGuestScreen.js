@@ -7,9 +7,23 @@ const AddGuestScreen = ({route, navigation}) => {
   const { eventID} = route.params;
   const [guestName, setGuestName] = useState('');
   const [email, setEmail] = useState('');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // Function to handle saving the guest information
+  
   const handleSaveGuest = async () => {
+    // Check for empty fields first
+    if (!guestName.trim() || !email.trim()) {
+      Alert.alert("Missing Information", "Please provide a name and valid email to add a guest.");
+      return;
+    }
+
+    //Validate email with regex
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
     if (!guestName || !email) {
       //Alert if fields are empty
       Alert.alert("Missing Information", "Please provide a name and valid email to add a guest.");

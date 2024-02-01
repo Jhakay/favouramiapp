@@ -3,6 +3,8 @@ import { View, TextInput, Button, StyleSheet, Text, Alert} from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { addDoc, collection } from 'firebase/firestore';
 import {auth, db} from '../utils/firebaseConfig';
+import { TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const CreateAccountScreen = () => {
     const [name, setName] = useState('');
@@ -11,6 +13,23 @@ const CreateAccountScreen = () => {
     const [password, setPassword] = useState('');
     const [passwordValid, setPasswordValid] = useState(true);
     const [passwordStrength, setPasswordStrength] = useState('');
+    const [passwordVisible, setPasswordVisible] = useState(false); //Toggles password visibility
+    
+    const navigation = useNavigation();
+
+    //Function to display password requirements
+    const renderPasswordRequirements = () => {
+        return (
+            <View style={styles.passwordRequirements}>
+                <Text>Password must contain:</Text>
+                <Text> - At least 8 characters</Text>
+                <Text> - At least one number</Text>
+                <Text> - At least one uppercase letter</Text>
+                <Text> - At least one lowercase letter</Text>
+                <Text> - At least one special character (!@#$%^&amp;*(),.?":{}|&lt;&gt;)</Text>
+            </View>
+        );
+    };
 
     //Email validation criteria
     const validateEmail = (email) => {
@@ -51,8 +70,9 @@ const CreateAccountScreen = () => {
 
     //Update email state and validation state
     const handleEmailChange = (text) => {
-        setEmail(text);
-        setEmailValid(validateEmail(text));
+        const trimmedEmail = text.trim();
+        setEmail(trimmedEmail);
+        setEmailValid(validateEmail(trimmedEmail));
     };
 
     //Update password state and validation state
@@ -62,8 +82,20 @@ const CreateAccountScreen = () => {
         setPasswordStrength(determinePasswordStrength(text));
     };
 
+    // Reset all fields
+    const resetFields = () => {
+        setName('');
+        setEmail('');
+        setPassword('');
+        setEmailValid(true);
+        setPasswordValid(true);
+        setPasswordStrength('');
+    };
+
     const handleSignup = async () => {
-        if(!validateEmail(email)) {
+        const trimmedEmail = email.trim();
+
+        if(!validateEmail(trimmedEmail)) {
             setEmailValid(false);
             Alert.alert('Invalid Email', 'Please enter a valid email address');
             return;
@@ -71,7 +103,7 @@ const CreateAccountScreen = () => {
 
         if (!validatePassword(password)) {
             setPasswordValid(false);
-            Alert.alert('Invalid Passord', 'Password does not meet requirements');
+            Alert.alert('Invalid Password', 'Password does not meet requirements');
             //Highlight requirements
             return;
         }
@@ -80,7 +112,7 @@ const CreateAccountScreen = () => {
             //Create user with email and password using Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            console.log('User account created and signed it!');
+            //console.log('User account created');
 
             //Add additional data to Firestore
             const docRef = await addDoc(collection(db, "users"), {
@@ -88,8 +120,22 @@ const CreateAccountScreen = () => {
                 name: name,
                 email: email,
             });
-            console.log('Firestore document written with ID: ', docRef.id);
-            //Will navigate to dashboard on completion
+            //console.log('Firestore document written with ID: ', docRef.id);
+            //Confirmation alert
+            Alert.alert(
+                'Congratulations!',
+                'You account has been created. Log in and start planning!',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            resetFields();
+                            // Navigate to log-in screen
+                            navigation.navigate('LoginScreen'); 
+                        }
+                    }
+                ]
+            );
 
         } catch (error) {
             console.error('Error adding document: ', error);
@@ -117,10 +163,16 @@ const CreateAccountScreen = () => {
             placeholder="Password"
             value={password}
             onChangeText={handlePasswordChange}
-            secureTextEntry
+            secureTextEntry={!passwordVisible} //Toggle visibility
             style={[styles.input, !passwordValid && styles.invalidInput]} //Invalid style if input is not valid
             />
+            
+            <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.showHideButton}>
+                <Text>{passwordVisible ? 'Hide Password' : 'Show Password'}</Text>
+            </TouchableOpacity>
+
             <Text style={styles[passwordStrength.replace(' ', '')]}>Password Strength: {passwordStrength}</Text>
+            {renderPasswordRequirements()}
             <Button title="Create Account" onPress={handleSignup} />
         </View>
     );
@@ -147,6 +199,13 @@ const styles = StyleSheet.create({
         borderColor: 'red',
     },
 
+    passwordRequirements: {
+        width: '80%',
+        alignItems: 'flex-start',
+        margin: 10,
+        padding: 10,
+    },
+
     /***** PASSWORD STRENGTH *****/
     VeryWeak: { color: 'red' },
     Weak: { color: 'orange' },
@@ -154,6 +213,10 @@ const styles = StyleSheet.create({
     Strong: { color: 'lightgreen' },
     VeryStrong: { color: 'green' },
     /*****************/
+
+    showHideButton: {
+        fontWeight: 'bold',
+    },
 
 
 });

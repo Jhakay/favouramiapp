@@ -38,7 +38,11 @@ const Dashboard = () => {
                         const userData = userDoc.data();
                         console.log("User data found: ", userData); //Confirm right user
 
-                        setFullName(userData.name);
+                        //Split full name by space and take the first part
+                        const firstName = userData.name.split(' ')[0];
+                        
+                        //setFullName(userData.name);
+                        setFullName(firstName);//Set only the first name
                         setUserEmail(userData.email);
 
                         const userDocRef = doc(db, "users", uid); 
@@ -135,7 +139,7 @@ const Dashboard = () => {
     return (
         <View style={styles.listContainer}>
             <Text style={styles.header}>Hello {fullName}!</Text>
-            <Text style={styles.header}>Email: {userEmail}!</Text>
+            
 
             <FlatList 
                 data={events}

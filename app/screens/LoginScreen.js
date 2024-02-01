@@ -3,10 +3,12 @@ import {View, TextInput, Button, Text, StyleSheet, Alert} from 'react-native';
 import {signInWithEmailAndPassword} from 'firebase/auth';
 import {auth} from '../utils/firebaseConfig'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TouchableOpacity } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [passwordVisible, setPasswordVisible] = useState(false); //Toggles password visibility
 
     const handleLogin = async () => {
         try {
@@ -45,8 +47,12 @@ const LoginScreen = ({ navigation }) => {
                 value={password}
                 onChangeText={setPassword}
                 style={styles.input}
-                secureTextEntry
+                secureTextEntry={!passwordVisible}
             />
+
+            <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.showHideButton}>
+                <Text>{passwordVisible ? 'Hide Password' : 'Show Password'}</Text>
+            </TouchableOpacity>
 
             <Button title="Log In" onPress={handleLogin} />
             <Text
@@ -79,6 +85,10 @@ const styles = StyleSheet.create({
     signupText: {
         color: '#0000ff',
         marginTop: 15,
+    },
+
+    showHideButton: {
+        fontWeight: 'bold',
     },
     
 });
