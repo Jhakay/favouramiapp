@@ -1,8 +1,8 @@
 import React, {useContext, useState, useEffect} from 'react';
 import {useUser} from '../../utils/UserContext';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Dimensions, ScrollView, Alert } from 'react-native';
 import { db } from '../../utils/firebaseConfig';
-import { collection, query, where, onSnapshot, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
 const MyEventsScreen = () => {
@@ -18,10 +18,6 @@ const MyEventsScreen = () => {
             return;
         }
 
-        //setLoading(true);
-        //const eventsRef = collection(db, "events");
-        //const eventsQuery = query(eventsRef, where("userID", "==", user.uid));
-
         const eventsQuery = query(collection(db, "events"), where("userID", "==", user.uid));
         const unsubscribe = onSnapshot(eventsQuery, (snapshot) => {
             const loadedEvents = snapshot.docs.map(doc => ({
@@ -34,20 +30,54 @@ const MyEventsScreen = () => {
         }, [user.uid]);
 
         const renderEvent = ({ item }) => (
-            <TouchableOpacity
-            style={styles.eventItem}
-            onPress={() => navigation.navigate('EventDetails', {
-                eventName: item.event,
-                eventDate: item.dateTimeStr,
-                eventID: item.id,
-            })}
-        >
-            <Text style={styles.eventName}>{item.event}</Text>
-            <Text style={styles.eventDate}>{item.dateTimeStr}</Text>
-            <Text style={styles.eventDescription}>{item.description}</Text>
-            <Text style={styles.eventLocation}>{item.location}</Text>
-        </TouchableOpacity>
+            <View style={styles.eventItem}>
+                <TouchableOpacity
+                style={styles.eventItem}
+                onPress={() => navigation.navigate('Event', {
+                    eventName: item.event,
+                    eventDate: item.dateTimeStr,
+                    eventID: item.id,//Pass eventId
+                    userId: user.uid, 
+                })}
+            >
+                <Text style={styles.eventName}>{item.event}</Text>
+                <Text style={styles.eventDate}>{item.dateTimeStr}</Text>
+                <Text style={styles.eventDescription}>{item.description}</Text>
+                <Text style={styles.eventLocation}>{item.location}</Text>
+                </TouchableOpacity>
+
+                <View style={styles.actionContainer}>
+                <Text style={styles.actionLink} onPress={() => handleAmend(item.id)}>Amend</Text>
+                <Text style={styles.actionLink} onPress={() => handleDelete(item.id)}>Delete</Text>
+                </View>
+            </View>
         );
+
+        //Function - Delete Event
+        const handleDelete = async (eventId) => {
+            Alert.alert(
+                "Confirm Delete",
+                "Are you sure you want to delete this event. This cannot be undone!",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "OK", onPress: async () => {
+                        try {
+                            await deleteDoc(doc(db, "events", eventId));
+                            //Set the MyEventsPage to refresh here
+                        } catch (error) {
+                            console.error("Error removing document: ", error);
+                            Alert.alert("Error", "Failed to delete the event.");
+                        }
+                    }
+                }
+                ]
+            );
+        };
+
+        //Amend 
+        const handleAmend = (eventId) => {
+            navigation.navigate('CreateEvent', { eventID: eventId });
+        };
         
         if (loading) {
                 return <View style={styles.loadingContainer}><Text>Loading...</Text></View>;
@@ -73,6 +103,17 @@ const MyEventsScreen = () => {
 
 const styles = StyleSheet.create({
         
+    actionContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
+    },
+
+    actionLink: {
+        color: 'blue',
+        fontWeight: 'bold',
+    },
+    
     addButton: {
         backgroundColor: 'blue',
         padding: 15,

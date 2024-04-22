@@ -11,6 +11,7 @@ import LoginScreen from './app/screens/LoginScreen.js';
 import Dashboard from './app/screens/DashboardScreen.js';
 import EventScreen from './app/screens/EventScreen.js';
 import AddGuestScreen from './app/screens/AddGuestScreen.js';
+import Invitation from './app/screens/Invitation.js';
 
 //Modal
 import CreateEventScreen from './app/screens/CreateEventScreen.js';
@@ -34,6 +35,7 @@ const App = () => {
           <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ presentation: 'modal '}}/>
           <Stack.Screen name="Event" component={EventScreen} />
           <Stack.Screen name="AddGuest" component={AddGuestScreen} />
+          <Stack.Screen name="Invitation" component={Invitation} />
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

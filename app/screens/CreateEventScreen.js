@@ -1,10 +1,9 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button, Platform } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button, Alert, Platform } from 'react-native';
 import { db } from '../utils/firebaseConfig';
-import { collection, addDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useNavigation } from '@react-navigation/native';
-import { Alert } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { commonStyles } from '../utils/commonStyles';
 import UserContext from '../utils/UserContext';
@@ -26,6 +25,8 @@ const formatTime = (time) => {
 
 const CreateEventScreen = () => {
     const { user } = useContext(UserContext);
+    const navigation = useNavigation();
+    const route = useRoute();
     const [eventName, setEventName] = useState('');
     const [eventDate, setEventDate] = useState(new Date());
     const [eventTime, setEventTime] = useState(new Date());
@@ -33,8 +34,67 @@ const CreateEventScreen = () => {
     const [eventLocation, setEventLocation] = useState('');
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
     const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+    const isEditing = route.params?.eventID; //Determines whether or not it is create new or editing
 
-    const navigation = useNavigation();
+    useEffect(() => {
+        if (isEditing) {
+            const loadEventData = async () => {
+                const docRef = doc(db, "events", route.params.eventID);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const eventData = docSnap.data();
+                    setEventName(eventData.event);
+                    setEventDate(eventData.datetime.toDate());
+                    setEventTime(eventData.datetime.toDate());
+                    setEventDescription(eventData.description);
+                    setEventLocation(eventData.location);
+                } else {
+                    Alert.alert("Error", "Event not found.");
+                }
+            };
+            loadEventData();
+        }
+    }, [route.params?.eventID]);
+
+    const handleSaveEvent = async () => {
+        if (!eventName || !eventDescription || !eventLocation) {
+            Alert.alert("Error", "Please fill out all fields.");
+            return;
+    }
+    const fullEventDate = new Date(
+        eventDate.getFullYear(),
+        eventDate.getMonth(),
+        eventDate.getDate(),
+        eventTime.getHours(),
+        eventTime.getMinutes()
+      );
+      try {
+        if (isEditing) {
+          await updateDoc(doc(db, "events", route.params.eventID), {
+            event: eventName,
+            datetime: fullEventDate,
+            description: eventDescription,
+            location: eventLocation,
+            userID: user.uid,
+          });
+          Alert.alert("Success", "Event updated successfully!");
+        } else {
+          await addDoc(collection(db, "events"), {
+            event: eventName,
+            datetime: fullEventDate,
+            description: eventDescription,
+            location: eventLocation,
+            userID: user.uid,
+          });
+          Alert.alert("Success", "Event created successfully!");
+        }
+        navigation.goBack();
+      } catch (error) {
+        console.error("Error saving event: ", error);
+        Alert.alert("Error", "Failed to save the event.");
+      }
+    };
+
 
     const handleCreateEvent = async () => {
         if (!user || !user.uid) {
@@ -100,10 +160,10 @@ const CreateEventScreen = () => {
     return (
         <View style={styles.container}>
 
-            <Text style={commonStyles.heading}>Create Event</Text>
+            <Text style={styles.heading}>{isEditing ? "Edit Event" : "Create Event"}</Text>
 
             <TextInput 
-                style={commonStyles.input} 
+                style={styles.input} 
                 placeholder="Event Name"
                 onChangeText={setEventName}
                 value={eventName}
@@ -153,9 +213,9 @@ const CreateEventScreen = () => {
 
             <TouchableOpacity
                 style={commonStyles.button}
-                onPress={handleCreateEvent}
+                onPress={handleSaveEvent}
             >
-                <Text style={commonStyles.buttonText}>Create Event</Text>
+                <Text style={commonStyles.buttonText}>{isEditing ? "Update Event" : "Create Event"}</Text>
             </TouchableOpacity>
 
         </View>
@@ -163,6 +223,18 @@ const CreateEventScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    
+    button: {
+        backgroundColor: 'blue',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+    },
+
+    buttonText: {
+        color: 'white',
+        fontSize: 18,
+    },
     
     container: {
         flex: 1,
@@ -172,8 +244,22 @@ const styles = StyleSheet.create({
     },
 
     datePickerContainer: {
-        // Style for date picker button
         marginBottom: 20,
+    },
+
+    heading: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 20,
+      },
+    
+    input: {
+        marginBottom: 15,
+        paddingHorizontal: 10,
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 1,
+        borderRadius: 5,
     },
 
 });

@@ -1,96 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, Alert } from 'react-native';
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { View, Text, FlatList, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { collection, query, where, getDocs, getDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 import { useFocusEffect } from '@react-navigation/native';
+import formatDateAndTime from '../utils/formatDateAndTime';
+
 
 const EventScreen = ({ route, navigation }) => {
-  const { eventID } = route.params; // this should be just the ID, not the full path
+  const { eventID, userId } = route.params; 
   const [eventDetails, setEventDetails] = useState(null);
   const [guests, setGuests] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const fetchData = async () => {
-        await fetchEventDetails();
-        await fetchGuestDetails();
-      };
-
-      fetchData();
-    }, [])
-  );
-
-  // Fetch the details of the event
-  const fetchEventDetails = async () => {
-    if (eventID) {
+    // Fetch the details of the event
+    const fetchEventDetails = async () => {
       try {
         const eventRef = doc(db, 'events', eventID);
         const eventSnap = await getDoc(eventRef);
 
         if (eventSnap.exists()) {
-          const eventData = eventSnap.data();
-          Object.keys(eventData).forEach(key => {
-            if (eventData[key] && typeof eventData[key].toDate === 'function') {
-              eventData[key] = eventData[key].toDate().toString();
-            }
-          });
+          let eventData = eventSnap.data();
+
+          // Log to see what eventData contains
+          console.log("Fetched event data: ", eventData);
+
+          if (eventData.datetime && typeof eventData.datetime.seconds === 'number') {
+            // Convert the Timestamp to a JavaScript Date object
+            const dateObj = new Date(eventData.datetime.seconds * 1000);
+            
+            // Now, use formatDateAndTime utility function
+            const { formattedDate, formattedTime } = formatDateAndTime(dateObj);
+    
+            // Include the formatted date and time in your state
+            eventData.formattedDate = formattedDate;
+            eventData.formattedTime = formattedTime;
+          } else {
+            //Handle invalid date object
+            eventData.formattedDate = 'Invalid Date';
+            eventData.formattedTime = 'Invalid Time';
+          }
           setEventDetails(eventData);
         } else {
-          console.log('No such event!');
+          Alert.alert("Event not found", "The event details could not be found.");
         }
       } catch (error) {
+        Alert.alert("Error", "Unable to fetch event details.");
         console.error('Error fetching event details: ', error);
       }
-    }
-  };
-
-  // Fetch the guest list for the event
-  const fetchGuestDetails = async () => {
-    if (eventID) {
-      try {
-        const guestsQuery = query(collection(db, 'guest'), where('eventID', '==', eventID));
-
-        const querySnapshot = await getDocs(guestsQuery);
-        if (!querySnapshot.empty) {
-          const guestsData = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setGuests(guestsData);
-        } else {
-          console.log('No guests found for this event');
-          setGuests([]); // In case no guests are found, set to empty array
-        }
-      } catch (error) {
-        console.error('Error fetching guest details: ', error);
-      }
-    }
-  };
-
-  // Effect to fetch event and guest details
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchEventDetails();
-      await fetchGuestDetails();
     };
 
-    setLoading(true);
-    fetchData().finally(() => setLoading(false));
-  }, [eventID]);
+      // Fetch the guest list for the event
+      const fetchGuestDetails = async () => {
+        try {
+          const guestsQuery = query(collection(db, 'guests'), where('eventID', '==', eventID));
+          const querySnapshot = await getDocs(guestsQuery);
+          setGuests(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        } catch (error) {
+          Alert.alert("Error", "Unable to fetch guest details.");
+          console.error('Error fetching guest details: ', error);
+        }
+      };
+      //Refresh guest list every time screen is focused
+      useFocusEffect(
+        React.useCallback(() => {
+          setLoading(true);
+          fetchEventDetails();
+          fetchGuestDetails().then(() => setLoading(false));
+          return () => { /* Cleanup if needed */ };
+        }, [eventID]) 
+);
+
+const handleDeleteGuest = async(guestId) => {
+  try {
+    await deleteDoc(doc(db, 'guests', guestId));
+    setGuests(guests.filter(guest => guest.id !== guestId));
+    Alert.alert('Guest Deleted', 'The guest has been removed successfully.');
+  } catch (error) {
+    Alert.alert('Error', 'Unable to delete guest.');
+    console.error('Error deleting guest: ', error);
+  }
+};
 
    // Function placeholders for button actions
    const handleAddGuests = () => {
-    navigation.navigate('AddGuest', {eventID: eventID});
+    navigation.navigate('AddGuest', {
+      eventID: eventID,
+      userId: userId
+    });
     console.log('Add Guests clicked');
-    // Add your logic for adding guests
   };
 
   const handleSendInvitation = () => {
     console.log('Send Invitation clicked');
-    // Logic for sending invitations
-    Alert.alert('Feature Coming Soon', 'Sending invitations will be available soon.');
+    navigation.navigate('Invitation', {
+      eventID,
+      userId: userId,
+    })
   };
 
   const handleSelectFavours = () => {
@@ -108,7 +114,10 @@ const EventScreen = ({ route, navigation }) => {
   // Render individual guest item
   const renderGuest = ({ item }) => (
     <View style={styles.guestItem}>
+      <TouchableOpacity onPress={() => navigation.navigate('AddGuest', {guestId: item.id, eventID: eventID, userId: userId})}>
       <Text style={styles.guestName}>{item.guestName}</Text>
+      </TouchableOpacity>
+      <Text style={styles.deleteIcon} onPress={() => handleDeleteGuest(item.id)}>X</Text>
     </View>
   );
 
@@ -128,7 +137,8 @@ const EventScreen = ({ route, navigation }) => {
       {/* Event details */}
       <View style={styles.header}>
       <Text style={styles.title}>{eventDetails?.event || 'Event'}</Text>
-      <Text style={styles.date}>{eventDetails?.datetime || 'Date/Time'}</Text>
+      <Text style={styles.date}>{eventDetails?.formattedDate || 'Date'}</Text>
+      <Text style={styles.time}>{eventDetails?.formattedTime || 'Time'}</Text>
     </View>
 
     {/* Content Section with Guest List and Tasks */}
@@ -180,15 +190,29 @@ const styles = StyleSheet.create({
     color: 'grey',
   },
 
+  deleteIcon: {
+    color: 'red',
+    fontWeight: 'bold',
+    fontSize: 24,
+  },
+
   guestItem: {
-    fontSize: 15,
-    color: 'grey',
-    paddingVertical: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    marginBottom: 5,
+    alignItems: 'center'
   },  
 
   guestList: {
     flex: 1,
     marginBottom: 20,
+  },
+
+  guestName: {
+    fontSize: 16,
+    color: '#333',
   },
 
   header: {

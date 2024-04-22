@@ -1,56 +1,82 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { db } from '../utils/firebaseConfig'; 
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const AddGuestScreen = ({route, navigation}) => {
-  const { eventID} = route.params;
+  const { eventID, userId, guestId} = route.params;
   const [guestName, setGuestName] = useState('');
   const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    console.log("Received parameters:", { eventID, userId, guestId });
+    //Fetch existing guest for editing
+    if (guestId) {
+      const fetchGuestDetails = async () => {
+        const guestRef = doc(db, 'guests', guestId);
+        const guestSnap = await getDoc(guestRef);
+        if (guestSnap.exists()) {
+          const guestData = guestSnap.data();
+          setGuestName(guestData.guestName);
+          setEmail(guestData.email);
+        } else {
+          Alert.alert("Error", "Guest not found.");
+        }
+      };
+      fetchGuestDetails();
+    }
+  }, [guestId]);//Track dependency on guestId
 
   // Function to handle saving the guest information
   const handleSaveGuest = async () => {
     if (!guestName || !email) {
       //Alert if fields are empty
       Alert.alert("Missing Information", "Please provide a name and valid email to add a guest.");
-      return;
+      return; 
     }
 
     try {
-      // Add a new document with a generated id to the guest collection
-      const docRef = await addDoc(collection(db, "guest"), { 
+      if (guestId) {
+      // Update existing guest
+      //const guestRef = doc(db, 'guests', guestId);
+      await updateDoc(doc(db, 'guests', guestId), {
+        guestName: guestName,
+        email: email,
+        eventID: eventID,//Map data
+        userId: userId,
+      });
+      Alert.alert("Success", "Guest's details updated successfully!");
+    } else {
+      //Add new guest
+      const docRef = await addDoc(collection(db, "guests"), {
         guestName: guestName,
         email: email,
         eventID: eventID,
+        userId: userId,
       });
-
-      setGuestName('');
-      setEmail('');
-
-      //Display confirmation message
-      Alert.alert("Guest Added", `${guestName} is now a guest to your event. Add another or exit.`, [
-        {text: "OK", onPress: () => console.log("OK Pressed")}
-      ]);
-
-      console.log("Document written with ID: ", docRef.id);
-    } catch (e) {
-      console.error("Error adding document: ", e);
-      Alert.alert("Error", "There was an error adding the guest.");
+      Alert.alert("Success", "Guest added successfully!");
     }
-  };
+  } catch (e) {
+    console.error("Error saving guest: ", e);
+    Alert.alert("Error", "There was an error processing your request.");
+  }
+
+  setGuestName('');
+  setEmail('');
+};
 
   // Function to handle exiting Add Guest
   const handleExit = () => {
     //Clear all input fields
     setGuestName('');
     setEmail('');
-    navigation.navigate('Event', {eventID: eventID});
+    navigation.goBack();
     console.log('Exit Add Guest');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Add Guest</Text>
+      <Text style={styles.header}>{guestId ? "Edit Guest" : "Add Guest"}</Text>
       <TextInput
         style={styles.input}
         placeholder="Guest name:"
@@ -67,7 +93,7 @@ const AddGuestScreen = ({route, navigation}) => {
       />
 
       <TouchableOpacity onPress={handleSaveGuest} style={styles.button}>
-        <Text style={styles.buttonText}>Save</Text>
+        <Text style={styles.buttonText}>{guestId ? "Update Guest" : "Save Guest"}</Text>
       </TouchableOpacity>
       
       <TouchableOpacity onPress={handleExit} style={styles.buttonExit}>
