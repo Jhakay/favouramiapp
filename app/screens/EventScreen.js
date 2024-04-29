@@ -100,9 +100,26 @@ const handleDeleteGuest = async(guestId) => {
   };
 
   const handleSelectFavours = () => {
-    console.log('Select Favours clicked');
-    // Logic for selecting favours
-    Alert.alert('Feature Coming Soon', 'Selecting favours will be available soon.');
+    //Explain that user will be sent to a different section of app
+    Alert.alert(
+      'Navigating to Shop', 
+      'Where you can view our selection of Digital Party Favours.',
+    [
+      {
+        text: "OK",
+        onPress: () => {
+          navigation.navigate ('Dashboard', {
+            screen: 'Shop',
+            params: {
+              eventID: eventID,
+              userId: userId,
+          },
+      });
+    }
+  },
+  ],
+  {cancelable: false}
+  );
   };
 
   const handleSendFavours = () => {

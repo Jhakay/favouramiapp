@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Dimensions, ImageBackground, View, Text, Image, StyleSheet, Alert } from 'react-native';
+import { Dimensions, ImageBackground, View, Text, Image, StyleSheet, Alert, Button, TouchableOpacity } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 import formatDateAndTime from '../utils/formatDateAndTime';
 import invitationbackground from '../assets/invitationbackground.jpg'; 
+import { commonStyles } from '../utils/commonStyles';
 
-const Invitation = ({ route }) => {
+const Invitation = ({ route, navigation }) => {
   const { eventID} = route.params;
   const [eventDetails, setEventDetails] = useState(null);
 
@@ -50,6 +51,25 @@ const Invitation = ({ route }) => {
     fetchEventDetails();
   }, [eventID]); 
 
+  const handleSendInvitation = () => {
+    //Create logic to send email invitations to guests
+    Alert.alert(
+      'Feature Coming Soon', 
+      'Sending email invitations to your guests will be available soon.',
+    [
+      {
+        text: "OK",
+        onPress: () => navigation.goBack(),
+      },
+    ],
+    {cancelable: false}
+  );
+  };
+
+  const handleCancel = () => {
+    navigation.goBack(); 
+  };
+
   if (!eventDetails) {
     return (
       <View style={styles.centered}>
@@ -68,12 +88,32 @@ const Invitation = ({ route }) => {
       <View style={styles.invitationTextContainer}>
         <Text style={styles.greeting}>Hello!</Text>
         <Text style={styles.celebrateText}>We are having a celebration!</Text>
-        <Text style={styles.event}>Come to {eventDetails.event}</Text>
+        <Text style={styles.event}>{eventDetails.event}</Text>
         <Text style={styles.description}>{eventDetails.description}</Text>
         <Text style={styles.date}>on {eventDetails.date},</Text>
         <Text style={styles.time}>at {eventDetails.time}</Text>
         <Text style={styles.location}>Location: {eventDetails.location}</Text>
         <Text style={styles.RSVP}>RSVP below</Text>
+        
+        <TouchableOpacity
+          style={styles.button}
+          onPress={
+            handleSendInvitation
+          }
+        >
+          <Text
+          style={styles.buttonText}
+          >
+            Send Invitations</Text>
+        </TouchableOpacity>
+
+
+        <Text
+          style={commonStyles.hLinkText}
+          onPress={handleCancel}
+          >
+            Cancel
+        </Text>
         
     </View>
     </ImageBackground>
@@ -85,9 +125,26 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     justifyContent: 'center',
   },
+
+  button: {
+    backgroundColor: '#efc363',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 10,
+    marginBottom:10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  buttonText: {
+    color: '#353839',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   
   celebrateText: {
     fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
     marginVertical: 8,
   },
@@ -111,16 +168,17 @@ const styles = StyleSheet.create({
   },
 
   event: {
-    fontSize: 16,
+    fontSize: 20,
+    fontWeight: '800',
     textAlign: 'center',
     marginVertical: 8,
   },
 
   greeting: {
-    fontSize: 20,
+    fontSize: 30,
     textAlign: 'center',
     marginVertical: 8,
-    fontWeight: 'bold',
+    fontWeight: '900',
   },
 
   invitationTextContainer: {
@@ -138,6 +196,7 @@ const styles = StyleSheet.create({
 
   RSVP: {
     fontSize: 16,
+    fontWeight: '800',
     textAlign: 'center',
     marginVertical: 8,
   },

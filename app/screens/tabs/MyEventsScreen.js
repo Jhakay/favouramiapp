@@ -85,6 +85,7 @@ const MyEventsScreen = () => {
 
         return (
             <View style={styles.container}>
+            <Text style={styles.headerText}>Your Events</Text>
             <FlatList 
                 data={events}
                 renderItem={renderEvent}
@@ -115,18 +116,21 @@ const styles = StyleSheet.create({
     },
     
     addButton: {
-        backgroundColor: 'blue',
-        padding: 15,
-        borderRadius: 5,
-        position: 'absolute',
+        backgroundColor: '#003365',
+        borderRadius: 30,
         bottom: 20,
         right: 20,
+        alignSelf: 'center',
+        width: 60,
+        height: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     addButtonText: {
         color: '#fff',
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 30,
+        fontWeight: '900',
     },
 
     container: {
@@ -190,6 +194,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         height: Dimensions.get('window').height / 20,
     },
+
+    headerText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        padding: 20,
+        textAlign: 'center',
+      },
     
     loadingContainer: {
         flex: 1,

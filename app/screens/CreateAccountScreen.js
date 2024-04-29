@@ -123,7 +123,7 @@ const CreateAccountScreen = () => {
 
     return (
 
-        <View style={styles.container}>
+        <View style={commonStyles.backgroundContainer}>
             {/* Logo Image */}
             <Image
             source={require('../assets/logo.png')}
@@ -137,14 +137,14 @@ const CreateAccountScreen = () => {
             placeholder="Name"
             value={name}
             onChangeText={setName}
-            style={commonStyles.input}
+            style={commonStyles.inputField}
             />
             
             <TextInput
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            style={[commonStyles.input, !emailValid && styles.invalidInput]} //Invalid style if input is not valid
+            style={[commonStyles.inputField, !emailValid && styles.invalidInput]} //Invalid style if input is not valid
             />
 
             <TextInput
@@ -152,7 +152,7 @@ const CreateAccountScreen = () => {
             value={password}
             onChangeText={handlePasswordChange}
             secureTextEntry={!passwordVisible} //Toggle based on state
-            style={[commonStyles.input, !passwordValid && styles.invalidInput]}
+            style={[commonStyles.inputField, !passwordValid && styles.invalidInput]}
             />
 
             <TouchableOpacity 

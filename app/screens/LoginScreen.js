@@ -41,6 +41,8 @@ const LoginScreen = ({ navigation }) => {
                     
                 //Navigate to Dashboard upon successful login
                 navigation.navigate('Dashboard');
+                setEmail('');
+                setPassword('');
                 } else {
                     throw new Error('User document does not exist in Firestore.');
                 }
@@ -57,7 +59,7 @@ const LoginScreen = ({ navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={commonStyles.backgroundContainer}>
             {/* Logo Image */}
             <Image
             source={require('../assets/logo.png')}
@@ -71,7 +73,7 @@ const LoginScreen = ({ navigation }) => {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
-                style={commonStyles.input}
+                style={commonStyles.inputField}
                 autoCapitalize="none"
             />
 
@@ -79,7 +81,7 @@ const LoginScreen = ({ navigation }) => {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                style={commonStyles.input}
+                style={commonStyles.inputField}
                 secureTextEntry={!passwordVisible}
             />
 

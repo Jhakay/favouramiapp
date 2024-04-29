@@ -15,6 +15,7 @@ import Invitation from './app/screens/Invitation.js';
 
 //Modal
 import CreateEventScreen from './app/screens/CreateEventScreen.js';
+import ItemDetails from './app/screens/ItemDetailsScreen.js';
 
 
 import { StatusBar } from 'expo-status-bar';
@@ -32,10 +33,11 @@ const App = () => {
           <Stack.Screen name="CreateAccount" component={CreateAccountScreen} />
           <Stack.Screen name="LoginScreen" component={LoginScreen} />
           <Stack.Screen name="Dashboard" component={Dashboard} />
-          <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ presentation: 'modal '}}/>
+          <Stack.Screen name="CreateEvent" component={CreateEventScreen} options={{ presentation: 'modal' }}/>
           <Stack.Screen name="Event" component={EventScreen} />
           <Stack.Screen name="AddGuest" component={AddGuestScreen} />
           <Stack.Screen name="Invitation" component={Invitation} />
+          <Stack.Screen name="ItemDetails" component={ItemDetails} options={{ presentation: 'modal' }}/>
         </Stack.Navigator>
       </NavigationContainer>
     </UserProvider>

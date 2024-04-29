@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { db } from '../utils/firebaseConfig'; 
 import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { commonStyles } from '../utils/commonStyles';
 
 const AddGuestScreen = ({route, navigation}) => {
   const { eventID, userId, guestId} = route.params;
@@ -75,30 +76,33 @@ const AddGuestScreen = ({route, navigation}) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.backgroundContainer}>
       <Text style={styles.header}>{guestId ? "Edit Guest" : "Add Guest"}</Text>
       <TextInput
-        style={styles.input}
+        style={commonStyles.inputField}
         placeholder="Guest name:"
         onChangeText={setGuestName}
         value={guestName}
       />
       
       <TextInput
-        style={styles.input}
+        style={commonStyles.inputField}
         placeholder="Email:"
         onChangeText={setEmail}
         value={email}
         keyboardType="email-address"
       />
 
-      <TouchableOpacity onPress={handleSaveGuest} style={styles.button}>
-        <Text style={styles.buttonText}>{guestId ? "Update Guest" : "Save Guest"}</Text>
+      <TouchableOpacity onPress={handleSaveGuest} style={commonStyles.button}>
+        <Text style={commonStyles.buttonText}>{guestId ? "Update Guest" : "Save Guest"}</Text>
       </TouchableOpacity>
       
-      <TouchableOpacity onPress={handleExit} style={styles.buttonExit}>
-        <Text style={styles.buttonTextExit}>Exit</Text>
-      </TouchableOpacity>
+      <Text
+        style={commonStyles.hLinkText}
+          onPress={handleExit}
+        >
+          Exit
+      </Text>
     </View>
   );
 };
